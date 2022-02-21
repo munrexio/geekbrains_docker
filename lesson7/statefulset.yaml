@@ -21,8 +21,8 @@ spec:
         name: mount-permissions-fix
         command: ["sh", "-c", "chmod 777 /prometheus"]
         volumeMounts:
-        - name: prometheus-storage-volume
-          mountPath: /prometheus
+        - name: prometheus-storage
+          mountPath: /prometheus/
       containers:
         - name: prometheus
           image: prom/prometheus:v2.19.2
@@ -35,16 +35,13 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
-            - name: prometheus-storage-volume
+            - name: prometheus-storage
               mountPath: /prometheus/
       volumes:
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
             name: prometheus-config
-        - name: prometheus-storage-volume
-          persistentVolumeClaim:
-            claimName: prometheus-pv-claim
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -57,3 +54,12 @@ spec:
                       values:
                         - prometheus
                 topologyKey: kubernetes.io/hostname
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: manual
